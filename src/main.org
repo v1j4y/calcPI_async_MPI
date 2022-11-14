@@ -1,0 +1,128 @@
+#+title:     MPI examples
+#+author:    vijay gopal chilkuri
+#+email:     chilkuri@chilkuri-MacBookPro
+
+* Headers
+#+begin_src  C :tangle main.c
+#include <stdio.h>
+#include <mpi.h>
+#include <sys/time.h>
+
+int main(int argc, char *argv[])
+{
+
+#+end_src
+
+* Initialize MPI
+#+begin_src  C :tangle main.c
+int rank, size;
+MPI_Status status;
+
+/* Init */
+MPI_Init(&argc, &argv);
+MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+#+end_src
+
+* Probing for messages
+
+** Slaves send messages
+#+begin_src  C :tangle main.c
+if (rank != 0) { // Slaves
+    int buf;
+
+    if (rank == 1) {
+        buf = 1;
+        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    }
+    if (rank == 1) {
+        buf = 1;
+        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    }
+    if (rank == 2) {
+        buf = 2;
+        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    }
+    if (rank == 2) {
+        buf = 2;
+        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    }
+#+end_src
+** Then wait to receive reply from master
+#+begin_src  C :tangle main.c
+
+    int sum = 0;
+    int flag = -1, res;
+    MPI_Request request;
+    MPI_Status status;
+    while (1) {
+        if(flag != 0)
+        {
+            MPI_Irecv(&res, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+            flag = 0;
+        }
+
+        MPI_Test(&request, &flag, &status);
+
+        if (flag != 0) {
+            printf("recv : %d, slave : %d\n", res, status.MPI_SOURCE);
+            if (status.MPI_SOURCE != -1)
+                sum += res;
+            flag = -1;
+        }
+
+
+        if (sum == 0)
+            break;
+    }
+
+    printf("rank = %d sum : %d\n", rank, sum);
+}
+#+end_src
+** Master probes for messages and receives
+#+begin_src  C :tangle main.c
+else { // Master
+    int sum = 0;
+    int flag = -1, res;
+    MPI_Request request;
+    MPI_Status status;
+    while (1) {
+        if(flag != 0)
+        {
+            MPI_Irecv(&res, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+            flag = 0;
+        }
+
+        MPI_Test(&request, &flag, &status);
+
+        if (flag != 0) {
+            printf("recv : %d, slave : %d\n", res, status.MPI_SOURCE);
+            if (status.MPI_SOURCE != -1)
+                sum += res;
+            flag = -1;
+        }
+
+
+        if (sum == 6)
+            break;
+    }
+#+end_src
+** Master sends reply to slaves
+#+begin_src  C :tangle main.c
+    int buf;
+    buf=0;
+    MPI_Send(&buf, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+    buf=0;
+    MPI_Send(&buf, 1, MPI_INT, 2, 0, MPI_COMM_WORLD);
+    printf("sum : %d\n", sum);
+}
+#+end_src
+* End
+#+begin_src  C :tangle main.c
+
+MPI_Finalize();
+return 0;
+
+}
+#+end_src
