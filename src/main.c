@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <mpi.h>
 #include <sys/time.h>
 
@@ -35,6 +36,7 @@ if (rank != 0) { // Slaves
 
 int sum = 0;
     int flag = -1, res;
+    int work = 0;
     MPI_Request request;
     MPI_Status status;
     while (1) {
@@ -44,21 +46,27 @@ int sum = 0;
             flag = 0;
         }
 
-        MPI_Test(&request, &flag, &status);
+        //if (work > 3){
+          MPI_Test(&request, &flag, &status);
+        //}
 
         if (flag != 0) {
-            printf("recv : %d, slave : %d\n", res, status.MPI_SOURCE);
             if (status.MPI_SOURCE != -1)
                 sum += res;
+            printf("recv : %d, master : %d sum=%d\n", res, status.MPI_SOURCE,sum);
             flag = -1;
         }
 
+        work++;
 
-        if (sum == 0)
+        if (sum == 1)
             break;
     }
+    sleep(2.0);
 
-    printf("rank = %d sum : %d\n", rank, sum);
+    //MPI_Send(&work, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+
+    printf("done rank = %d sum : %d work = %d\n", rank, sum, work);
 }
 
 else { // Master
@@ -76,22 +84,29 @@ else { // Master
         MPI_Test(&request, &flag, &status);
 
         if (flag != 0) {
-            printf("recv : %d, slave : %d\n", res, status.MPI_SOURCE);
             if (status.MPI_SOURCE != -1)
                 sum += res;
             flag = -1;
+            printf("recv : %d, slave : %d sum = %d\n", res, status.MPI_SOURCE,sum);
         }
 
 
         if (sum == 6)
             break;
     }
+    //sleep(4.0);
 
 int buf;
-    buf=0;
+    buf=1;
     MPI_Send(&buf, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
-    buf=0;
+    buf=1;
     MPI_Send(&buf, 1, MPI_INT, 2, 0, MPI_COMM_WORLD);
+    
+    //MPI_Recv(&buf, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, &status);
+    //printf("res from 1 : %d\n", buf);
+    //MPI_Recv(&buf, 1, MPI_INT, 2, 0, MPI_COMM_WORLD, &status);
+    //printf("res from 2 : %d\n", buf);
+
     printf("sum : %d\n", sum);
 }
 
