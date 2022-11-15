@@ -1,7 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include <mpi.h>
 #include <sys/time.h>
+
+#include "calculate_func.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,27 +20,12 @@ MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 if (rank != 0) { // Slaves
     int buf;
-
-    if (rank == 1) {
-        buf = 1;
-        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
-    if (rank == 1) {
-        buf = 1;
-        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
-    if (rank == 2) {
-        buf = 2;
-        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
-    if (rank == 2) {
-        buf = 2;
-        MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
+    srand(time(NULL) + rank);
 
 int sum = 0;
     int flag = -1, res;
-    int work = 0;
+    int work = 0, nSteps=1000;
+    double meanPI, varPI;
     MPI_Request request;
     MPI_Status status;
     while (1) {
@@ -55,16 +44,16 @@ int sum = 0;
             flag = -1;
         }
 
-        work++;
+        mcstepPI(nSteps, &meanPI, &varPI);
 
         if (sum == 1)
             break;
     }
     sleep(2.0);
 
-    MPI_Send(&work, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&meanPI, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
 
-    printf("done rank = %d sum : %d work = %d\n", rank, sum, work);
+    printf("done rank = %d sum : %d work = %d meanPI=%10.5f varPI=%10.5f\n", rank, sum, work, meanPI, varPI);
 }
 
 else { // Master
