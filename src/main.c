@@ -33,7 +33,7 @@ if (rank != 0) { // Slaves
         MPI_Send(&buf, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
 
-    int sum = 0;
+int sum = 0;
     int flag = -1, res;
     MPI_Request request;
     MPI_Status status;
@@ -60,6 +60,7 @@ if (rank != 0) { // Slaves
 
     printf("rank = %d sum : %d\n", rank, sum);
 }
+
 else { // Master
     int sum = 0;
     int flag = -1, res;
@@ -86,7 +87,7 @@ else { // Master
             break;
     }
 
-    int buf;
+int buf;
     buf=0;
     MPI_Send(&buf, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
     buf=0;

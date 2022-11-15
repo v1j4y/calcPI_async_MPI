@@ -11,6 +11,11 @@ pkgconfig_DATA = pkgconfig/mpiexamplelib.pc
 src_main_c = src/main.c
 src_main_h = 
 
+src/main.tangled: $(abs_top_builddir)/org/main.org
+	top_builddir=$(abs_top_builddir) srcdir=$(abs_srcdir) $(top_builddir)/tools/missing bash $(top_builddir)/tools/tangle.sh $(top_srcdir)/org/main.org
+
+src/main.c: src/main.tangled
+
 bin_PROGRAMS = mpiexample
 mpiexample_SOURCES = $(src_main_c) #$(src_main_h)
 mpiexample_CPPFLAGS = $(AM_CPPFLAGS)
