@@ -35,6 +35,8 @@ int sum = 0;
     MPI_Status status;
     MPI_Status statusstop;
 
+    MPI_Recv(&nSteps, 1, MPI_INT, 0, 10, MPI_COMM_WORLD, &status);
+
     while (1) {
 
         if(flag != 0)
@@ -80,6 +82,12 @@ else { // Master
     double nStepstot = 0.0;
     double errorPI = 10.0;
     double varPI   = 10.0;
+    
+    int nSteps = 50000;
+    for( i=1; i < size; ++i) {
+      MPI_Send(&nSteps, 1, MPI_INT, i, 10, MPI_COMM_WORLD);
+    }
+
     nmax = 12;
     while (1) {
         if(flag != 0)
