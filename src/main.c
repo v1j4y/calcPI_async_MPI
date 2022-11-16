@@ -22,12 +22,12 @@ MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 if (rank != 0) { // Slaves
     int buf;
-    srand(time(NULL) + rank);
+    srand( rank);
 
 int sum = 0;
     int flag = -1, res;
     int stop=-1;
-    int work = 0, nSteps=20000;
+    int work = 0, nSteps=50000;
     double sumPI, sumPI2;
     double data[4];
     MPI_Request request;
@@ -48,7 +48,6 @@ int sum = 0;
         if (flag != 0) {
             if (statusstop.MPI_SOURCE != -1)
                 sum += 1;
-            //printf("received stop = %d sum = %d\n",stop,sum);
             flag = 0;
         }
 
@@ -67,13 +66,6 @@ int sum = 0;
         sum++;
 
     }
-    //sleep(2.0);
-
-    //data[0] = sumPI;
-    //data[1] = sumPI2;
-    //MPI_Send(data, 2, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-
-    //printf("done rank = %d sum : %d work = %d sumPI=%10.5f sumPI2=%10.5f\n", rank, sum, work, data[1], data[2]);
 }
 
 else { // Master
@@ -101,19 +93,15 @@ else { // Master
         if (flag != 0) {
             if (status.MPI_SOURCE != -1)
                 sum += data[0];
-            //printf("recv : %10.5f, master : %d sum=%10.5f\n", data[0], status.MPI_SOURCE,sum);
             flag = -1;
             sumPItot  += data[1];
             sumPI2tot += data[2];
             nStepstot += data[3];
-            //printf("sum : %10.5f %10.5f mean=%10.5f\n", data[1], data[0], sumPItot/nStepstot);
             errorPI = M_PI/4 - sumPItot/nStepstot;
             varPI = (sumPI2tot - (sumPItot * sumPItot/nStepstot))/(nStepstot-1);
-            printf("%10.9f (Error=%10.9f) Var=%10.9f\n", sumPItot/nStepstot, errorPI, varPI);
         }
 
-        //if (abs(sum - 3 * 13.0) < 1e-10){
-        if (fabs(errorPI) < 0.000001){
+        if (fabs(errorPI) < 0.00000001){
           for( i=1; i < size; ++i) {
             buf = 1;
             MPI_Send(&buf, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
@@ -122,7 +110,7 @@ else { // Master
         }
     }
 
-    //printf("final sum : %10.5f %10.5f\n", data[1], data[0]);
+    printf("%10.9f (Error=%10.9f) Var=%10.9f\n", sumPItot/nStepstot, errorPI, varPI);
 }
 
 MPI_Finalize();
