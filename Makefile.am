@@ -25,7 +25,7 @@ bin_PROGRAMS = mpiexample
 mpiexample_SOURCES = $(src_main_c) $(src_main_h)
 mpiexample_CPPFLAGS = $(AM_CPPFLAGS)
 mpiexample_CFLAGS = $(AM_CFLAGS)
-mpiexample_CFLAGS += "-I${top_srcdir}/include"  "-I${top_srcdir}/src"
+mpiexample_CFLAGS += "-I${top_srcdir}/include"  "-I${top_srcdir}/src" "-lm"
 mpiexample_LDFLAGS = $(AM_LDFLAGS)
 
 lib_LTLIBRARIES = lib/libmpiexample.la

@@ -1,0 +1,31 @@
+#+title:     Utility functions
+#+author:    vijay gopal chilkuri
+#+email:     chilkuri@chilkuri-MacBookPro
+#+startup: showall
+
+* Headers
+#+begin_src  C :tangle (eval c) :main no
+#include "calculate_func.h"
+#+end_src
+
+* Calculate PI
+#+begin_src  C :tangle (eval c) :main no
+void mcstepPI(int nSteps, double *sumPI, double *sumPI2) {
+  int i;
+  double y = 0, x = 0;
+  for (i=0; i<nSteps; ++i) {
+    x = 1.0 * rand() / RAND_MAX;
+    y = sqrt(1 - x * x);
+    sumPI[0]  += y;
+    sumPI2[0] += y * y;
+  }
+}
+#+end_src
+
+#+begin_src  C :tangle (eval h_func) :main no
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+void mcstepPI(int nSteps, double *meanPI, double *varPI);
+#+end_src
