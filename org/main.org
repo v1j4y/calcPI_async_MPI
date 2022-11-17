@@ -47,8 +47,10 @@ if (rank != 0) { // Slaves
     int sum = 0;
     int flag = -1, res;
     int stop=-1;
-    int work = 0, nSteps=50000;
-    double sumPI, sumPI2;
+    int work = 0;
+    unsigned long long nSteps=50000;
+    unsigned long long nStepstot=0;
+    double sumPI = 0, var = 0, mean = 0, yim1 = 0;
     double data[4];
     MPI_Request request;
     MPI_Request requeststop;
@@ -76,14 +78,15 @@ if (rank != 0) { // Slaves
         if (stop == 1)
           break;
 
-        sumPI  = 0.0;
-        sumPI2 = 0.0;
-        mcstepPI(nSteps, &sumPI, &sumPI2);
+        mcstepPI(nSteps, &yim1, &mean, &var, &nStepstot);
+        nStepstot += nSteps;
+        //mean = sumPI/nStepstot;
 
         data[0] = rank;
-        data[1] = sumPI;
-        data[2] = sumPI2;
-        data[3] = nSteps;
+        data[1] = mean;
+        data[2] = var/nStepstot;
+        data[3] = nStepstot;
+        //printf(" rank=%d error=%10.5f\n",rank,M_PI/4 - mean);
         MPI_Isend(data, 4, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);
         sum++;
 
@@ -104,8 +107,21 @@ else { // Master
     double nStepstot = 0.0;
     double errorPI = 10.0;
     double varPI   = 10.0;
+    double meana  =  0.0;
+    double vara   =  0.0;
+    double nStepsa=  0.0;
+    double meanb  =  0.0;
+    double varb   =  0.0;
+    double nStepsb=  0.0;
+    double meanab =  0.0;
+    double varab  =  0.0;
+    double nStepsab=  0.0;
+    int nItermax=  0;
+    nItermax = 100000;
+    nItermax = nItermax - (nItermax % (size * (size-1)/2));
+    printf("Nitermax = %d\n",nItermax);
     
-    int nSteps = 50000;
+    unsigned long long nSteps = 50000;
     for( i=1; i < size; ++i) {
       MPI_Send(&nSteps, 1, MPI_INT, i, 10, MPI_COMM_WORLD);
     }
@@ -124,14 +140,34 @@ else { // Master
             if (status.MPI_SOURCE != -1)
                 sum += data[0];
             flag = -1;
-            sumPItot  += data[1];
-            sumPI2tot += data[2];
-            nStepstot += data[3];
-            errorPI = M_PI/4 - sumPItot/nStepstot;
-            varPI = (sumPI2tot - (sumPItot * sumPItot/nStepstot))/(nStepstot-1);
+            meanb   = data[1];
+            varb    = data[2];
+            nStepsb = data[3];
+            //meanb  = data[1]/nStepsb;
+            nStepsab = nStepsa + nStepsb;
+            nStepstot += nSteps;
+            meanab = (nStepsb * meanb + meana * nStepsa)/nStepsab;
+            varab  = vara + varb + (nStepsa * nStepsb) * (meana - meanb) * (meana - meanb) / (nStepsab);
+            vara    = varab;
+            varab  = sqrt(varab / (nStepsab-1));
+            //printf(" sum=%10.5f vara = %10.5f varb=%10.5f meana=%10.5f meanb=%10.5f meanab=%10.5f varab=%1.15f\n",sum,vara,varb,meana,meanb,meanab,varab);
+            errorPI = M_PI/4 - meanab;
+            varPI = varab;
+            meana   = meanab;
+            nStepsa = nStepsab;
         }
 
-        if (fabs(errorPI) < 0.00000001){
+        if(fabs(sum - 0.5 * size * (size-1)) < 1e-10 || (sum - 0.5 * size * (size-1)) > size*size) {
+          meana = 0.0;
+          vara  = 0.0;
+          nStepsa = 0;
+          //printf(" Setting to 0 ratio=%10.5f\n",nStepstot/nSteps);
+          sum = 0.0;
+          //printf("%10.9f (Error=%10.9f) Var=%10.9f\n", meanab, errorPI, varab);
+        }
+
+        //if (fabs(errorPI) < 0.00000001){
+        if (nStepstot/nSteps >= nItermax){
           for( i=1; i < size; ++i) {
             buf = 1;
             MPI_Send(&buf, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
@@ -140,7 +176,7 @@ else { // Master
         }
     }
 
-    printf("%10.9f (Error=%10.9f) Var=%10.9f\n", sumPItot/nStepstot, errorPI, varPI);
+    printf("%10.9f (Error=%10.9f) Var=%1.9f (%1.9f %1.9f) sum=%10.5f ratio=%10.5f\n", meanab, errorPI, varab, vara, varb, sum, nStepstot/nSteps);
 }
 #+end_src
 * End
