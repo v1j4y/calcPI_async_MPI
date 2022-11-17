@@ -85,9 +85,9 @@ if (rank != 0) { // Slaves
 
         data[0] = rank;
         data[1] = mean;
-        data[2] = var/nStepstot;
+        data[2] = var;
         data[3] = nStepstot;
-        //printf(" rank=%d error=%10.5f\n",rank,M_PI/4 - mean);
+        //printf(" -- rank=%d mean=%10.5f error=%10.5f var=%10.5f varerror=%10.5f\n",rank,mean,M_PI/4 - mean,var,sqrt(var/ (( nStepstot-1)))/sqrt(nStepstot));
         MPI_Isend(data, 4, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);
         sum++;
 
@@ -122,8 +122,9 @@ else { // Master
     double datansteps[M_WINDOW * (size-1)];
     int startidx[size-1];
     int nItermax=  0;
-    nItermax = 49;
+    nItermax = 10000;
     nItermax = nItermax - (nItermax % (size * (size-1)/2));
+    nItermax = nItermax - nItermax % (size-1);
     printf("Nitermax = %d size=%d\n",nItermax,M_WINDOW * (size-1));
     
     int nSteps = 50000;
@@ -142,44 +143,45 @@ else { // Master
 
         MPI_Test(&request, &flag, &status);
 
-        printf(" startidx=%d flag=%d\n", startidx[0],flag);
+        //printf(" startidx=%d flag=%d\n", startidx[0],flag);
         if (flag != 0) {
-        printf(" startidx=%d \n", startidx[0]);
+        //printf(" startidx=%d \n", startidx[0]);
             if (status.MPI_SOURCE != -1)
                 sum += data[0];
             flag = -1;
             srs = (int)floor(data[0])-1;
             startidx[srs] += 1;
             j = startidx[srs] % M_WINDOW;
-            printf(" j=%d srs=%d \n",j,srs);
+            //printf(" j=%d srs=%d \n",j,srs);
             datamean[srs * M_WINDOW + j] = data[1];
             datavar[srs * M_WINDOW + j] = data[2];
             datansteps[srs * M_WINDOW + j] = data[3];
         }
 
         if(sumidx == size-1) {
-            printf(" startidxis = \n");
-            for(i=0;i<size-1;++i){
-              printf(" %d ", startidx[i]);
-            }
-            printf("\n");
+            //printf(" startidxis = \n");
+            //for(i=0;i<size-1;++i){
+            //  printf(" %d ", startidx[i]);
+            //}
+            j = idx % M_WINDOW;
             idx += 1;
-            if(idx >= M_WINDOW) idx = 0;
+            //printf("  | j = %d\n",j);
+            //if(idx >= M_WINDOW) idx = 0;
             meana = 0.0;
             vara  = 0.0;
             nStepsa = 0;
             for(i=0;i<size-1;++i) {
-              meanb   = datamean[i*M_WINDOW + idx];
-              varb    = datavar[i*M_WINDOW + idx];
-              nStepsb = datansteps[i*M_WINDOW + idx];
+              meanb   = datamean[i*M_WINDOW + j];
+              varb    = datavar[i*M_WINDOW + j];
+              nStepsb = datansteps[i*M_WINDOW + j];
+              //printf(" sum=%10.5f vara = %10.5f varb=%10.5f meana=%10.5f meanb=%10.5f meanab=%10.5f varab=%1.15f\n",sum,vara,varb,meana,meanb,meanab,varab);
               //meanb  = data[1]/nStepsb;
               nStepsab = nStepsa + nStepsb;
               nStepstot += nSteps;
+              //printf(" nstepa=%10.5f nstepb=%10.5f nstepab=%10.5f\n",nStepsa,nStepsb,nStepsab);
               meanab = (nStepsb * meanb + meana * nStepsa)/nStepsab;
               varab  = vara + varb + (nStepsa * nStepsb) * (meana - meanb) * (meana - meanb) / (nStepsab);
               vara    = varab;
-              varab  = sqrt(varab / (nStepsab-1));
-              //printf(" sum=%10.5f vara = %10.5f varb=%10.5f meana=%10.5f meanb=%10.5f meanab=%10.5f varab=%1.15f\n",sum,vara,varb,meana,meanb,meanab,varab);
               errorPI = M_PI/4 - meanab;
               varPI = varab;
               meana   = meanab;
@@ -191,7 +193,7 @@ else { // Master
         for(i=0;i<size-1;++i) {
           if(startidx[i] > idx) sumidx += 1;
         }
-        printf(" flag=%d idx=%d sumidx=%d sum=%10.5f srs=%d startidx=%d\n",flag, idx,sumidx,sum,srs,startidx[srs]);
+        //printf(" flag=%d idx=%d sumidx=%d sum=%10.5f srs=%d startidx=%d nStepstot=%10.5f\n",flag, idx,sumidx,sum,srs,startidx[srs],nStepstot);
 
         //for(i=0;i<size-1;++i) {
         //  if(startidx[i] >= M_WINDOW) {
@@ -219,7 +221,8 @@ else { // Master
         }
     }
 
-    printf("%10.9f (Error=%10.9f) Var=%1.9f (%1.9f %1.9f) sum=%10.5f ratio=%10.5f\n", meanab, errorPI, varab, vara, varb, sum, nStepstot/nSteps);
+    //printf("%10.9f (Error=%10.9f) Var=%1.9f (%1.9f %1.9f) sum=%10.5f ratio=%10.5f\n", meanab, errorPI, (varab/(nStepstot * (nStepstot-1))), vara, varb, sum, nStepstot);
+    printf(" mean=%1.9f (Error=%1.9f) varerror=%1.9f\n",meanab, errorPI, sqrt(varab/ (( nStepstot-1)))/sqrt(nStepstot));
 }
 #+end_src
 * End
