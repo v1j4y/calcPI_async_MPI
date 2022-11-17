@@ -15,6 +15,7 @@
 #include "calculate_func.h"
 
 # define M_PI           3.14159265358979323846  /* pi */
+# define M_WINDOW       10                      /* data window */
 
 int main(int argc, char *argv[])
 {
@@ -48,7 +49,7 @@ if (rank != 0) { // Slaves
     int flag = -1, res;
     int stop=-1;
     int work = 0;
-    unsigned long long nSteps=50000;
+    int nSteps=50000;
     unsigned long long nStepstot=0;
     double sumPI = 0, var = 0, mean = 0, yim1 = 0;
     double data[4];
@@ -101,7 +102,7 @@ else { // Master
     MPI_Request request;
     MPI_Status status;
     double data[4];
-    int buf, i, nmax;
+    int buf, srs=0, i, nmax, idx=0, sumidx=0, j, k;
     double sumPItot  = 0.0;
     double sumPI2tot = 0.0;
     double nStepstot = 0.0;
@@ -116,14 +117,32 @@ else { // Master
     double meanab =  0.0;
     double varab  =  0.0;
     double nStepsab=  0.0;
+    //double datamean[M_WINDOW * (size-1)];
+    //double datavar[M_WINDOW * (size-1)];
+    //double datansteps[M_WINDOW * (size-1)];
+    //int startidx[size-1];
+    double *datamean;
+    double *datavar;
+    double *datansteps;
+    int *startidx;
     int nItermax=  0;
-    nItermax = 100000;
+    nItermax = 10;
     nItermax = nItermax - (nItermax % (size * (size-1)/2));
-    printf("Nitermax = %d\n",nItermax);
+    //printf(" dim = %ld",(size-1)*sizeof(int));
+    //printf(" dim = %ld",M_WINDOW * (size-1)*sizeof(double));
+    //printf(" dim = %ld",M_WINDOW * (size-1)*sizeof(double));
+    //printf(" dim = %ld\n",M_WINDOW * (size-1)*sizeof(double));
+    printf("Nitermax = %d size=%d\n",nItermax,M_WINDOW * (size-1));
+    startidx   = (int *)(malloc((size-1)*sizeof(int)));
+    printf(" startidx=%d\n",startidx[0]);
+    //datamean   = (double *)(malloc(M_WINDOW * (size-1)*sizeof(double)));
+    //datavar    = (double *)(malloc(M_WINDOW * (size-1)*sizeof(double)));
+    //datansteps = (double *)(malloc(M_WINDOW * (size-1)*sizeof(double)));
     
-    unsigned long long nSteps = 50000;
+    int nSteps = 50000;
     for( i=1; i < size; ++i) {
       MPI_Send(&nSteps, 1, MPI_INT, i, 10, MPI_COMM_WORLD);
+      //startidx[i-1] = -1;
     }
 
     nmax = 12;
@@ -140,6 +159,13 @@ else { // Master
             if (status.MPI_SOURCE != -1)
                 sum += data[0];
             flag = -1;
+            //srs = (int)floor(data[0])-1;
+            srs = floor(data[0])-1;
+            //startidx[srs] += 1;
+            //j = startidx[srs] % M_WINDOW;
+            //datamean[srs * M_WINDOW + j] = data[1];
+            //datavar[srs * M_WINDOW + j] = data[2];
+            //datansteps[srs * M_WINDOW + j] = data[3];
             meanb   = data[1];
             varb    = data[2];
             nStepsb = data[3];
@@ -157,9 +183,17 @@ else { // Master
             nStepsa = nStepsab;
         }
 
+        //sumidx = 0;
+        //for(i=0;i<size-1;++i) {
+        //  if(startidx[i] > idx) sumidx += 1;
+        //}
+        //printf(" flag=%d idx=%d sumidx=%d sum=%10.5f srs=%d startidx=%d\n",flag, idx,sumidx,sum,srs,startidx[srs]);
+        printf(" startidx=%d srs=%d\n", startidx[srs], srs);
+        //startidx[srs] = 0;
+
         if(fabs(sum - 0.5 * size * (size-1)) < 1e-10 || (sum - 0.5 * size * (size-1)) > size*size) {
           meana = 0.0;
-          vara  = 0.0;
+          vara  = -1.0;
           nStepsa = 0;
           //printf(" Setting to 0 ratio=%10.5f\n",nStepstot/nSteps);
           sum = 0.0;
