@@ -8,6 +8,7 @@
 #include "calculate_func.h"
 
 # define M_PI           3.14159265358979323846  /* pi */
+# define M_WINDOW       10                      /* data window */
 
 int main(int argc, char *argv[])
 {
@@ -79,7 +80,7 @@ else { // Master
     MPI_Request request;
     MPI_Status status;
     double data[4];
-    int buf, i, nmax;
+    int buf, srs, i, nmax, idx=0, sumidx=0, j, k;
     double sumPItot  = 0.0;
     double sumPI2tot = 0.0;
     double nStepstot = 0.0;
@@ -94,14 +95,19 @@ else { // Master
     double meanab =  0.0;
     double varab  =  0.0;
     double nStepsab=  0.0;
+    double datamean[M_WINDOW * (size-1)];
+    double datavar[M_WINDOW * (size-1)];
+    double datansteps[M_WINDOW * (size-1)];
+    int startidx[size-1];
     int nItermax=  0;
-    nItermax = 100000;
+    nItermax = 49;
     nItermax = nItermax - (nItermax % (size * (size-1)/2));
     printf("Nitermax = %d\n",nItermax);
     
     unsigned long long nSteps = 50000;
     for( i=1; i < size; ++i) {
       MPI_Send(&nSteps, 1, MPI_INT, i, 10, MPI_COMM_WORLD);
+      startidx[i-1] = 0;
     }
 
     nmax = 12;
@@ -114,26 +120,62 @@ else { // Master
 
         MPI_Test(&request, &flag, &status);
 
+        printf(" startidx=%d \n", startidx[0]);
         if (flag != 0) {
             if (status.MPI_SOURCE != -1)
                 sum += data[0];
             flag = -1;
-            meanb   = data[1];
-            varb    = data[2];
-            nStepsb = data[3];
-            //meanb  = data[1]/nStepsb;
-            nStepsab = nStepsa + nStepsb;
-            nStepstot += nSteps;
-            meanab = (nStepsb * meanb + meana * nStepsa)/nStepsab;
-            varab  = vara + varb + (nStepsa * nStepsb) * (meana - meanb) * (meana - meanb) / (nStepsab);
-            vara    = varab;
-            varab  = sqrt(varab / (nStepsab-1));
-            //printf(" sum=%10.5f vara = %10.5f varb=%10.5f meana=%10.5f meanb=%10.5f meanab=%10.5f varab=%1.15f\n",sum,vara,varb,meana,meanb,meanab,varab);
-            errorPI = M_PI/4 - meanab;
-            varPI = varab;
-            meana   = meanab;
-            nStepsa = nStepsab;
+            srs = (int)floor(data[0])-1;
+            startidx[srs] += 1;
+            j = startidx[srs] % M_WINDOW;
+            printf(" j=%d srs=%d \n",j,srs);
+            datamean[srs * M_WINDOW + j] = data[1];
+            datavar[srs * M_WINDOW + j] = data[2];
+            datansteps[srs * M_WINDOW + j] = data[3];
         }
+
+        if(sumidx == size-1) {
+            printf(" startidxis = \n");
+            for(i=0;i<size-1;++i){
+              printf(" %d ", startidx[i]);
+            }
+            printf("\n");
+            idx += 1;
+            if(idx >= M_WINDOW) idx = 0;
+            meana = 0.0;
+            vara  = 0.0;
+            nStepsa = 0;
+            for(i=0;i<size-1;++i) {
+              meanb   = datamean[i*M_WINDOW + idx];
+              varb    = datavar[i*M_WINDOW + idx];
+              nStepsb = datansteps[i*M_WINDOW + idx];
+              //meanb  = data[1]/nStepsb;
+              nStepsab = nStepsa + nStepsb;
+              nStepstot += nSteps;
+              meanab = (nStepsb * meanb + meana * nStepsa)/nStepsab;
+              varab  = vara + varb + (nStepsa * nStepsb) * (meana - meanb) * (meana - meanb) / (nStepsab);
+              vara    = varab;
+              varab  = sqrt(varab / (nStepsab-1));
+              //printf(" sum=%10.5f vara = %10.5f varb=%10.5f meana=%10.5f meanb=%10.5f meanab=%10.5f varab=%1.15f\n",sum,vara,varb,meana,meanb,meanab,varab);
+              errorPI = M_PI/4 - meanab;
+              varPI = varab;
+              meana   = meanab;
+              nStepsa = nStepsab;
+            }
+        }
+
+        sumidx = 0;
+        for(i=0;i<size-1;++i) {
+          if(startidx[i] > idx) sumidx += 1;
+        }
+        printf(" flag=%d idx=%d sumidx=%d sum=%10.5f srs=%d startidx=%d\n",flag, idx,sumidx,sum,srs,startidx[srs]);
+
+        //for(i=0;i<size-1;++i) {
+        //  if(startidx[i] >= M_WINDOW) {
+        //    startidx[i] = 0;
+        //    printf(" resetting startid[%d]\n",i);
+        //  }
+        //}
 
         if(fabs(sum - 0.5 * size * (size-1)) < 1e-10 || (sum - 0.5 * size * (size-1)) > size*size) {
           meana = 0.0;
