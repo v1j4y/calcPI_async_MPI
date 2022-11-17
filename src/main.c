@@ -115,15 +115,16 @@ else { // Master
 
     nmax = 12;
     while (1) {
-        if(flag != 0)
-        {
-            MPI_Irecv(data, 4, MPI_DOUBLE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &request);
-            flag = 0;
-        }
+        //if(flag != 0)
+        //{
+            //MPI_Irecv(data, 4, MPI_DOUBLE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &request);
+            MPI_Recv(&data, 4, MPI_DOUBLE, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+            //flag = 0;
+        //}
 
-        while(flag!=1){
-          MPI_Test(&request, &flag, &status);
-        }
+        //while(flag!=1){
+        //  MPI_Test(&request, &flag, &status);
+        //}
 
         //printf(" startidx=%d flag=%d\n", startidx[0],flag);
         if (flag != 0) {
