@@ -103,11 +103,12 @@ else { // Master
     int nItermax=  0;
     nItermax = 10000;
     nItermax = atoi(argv[1]);
+    int nSteps = 5000;
+    nSteps = atoi(argv[2]);
     nItermax = nItermax - (nItermax % (size * (size-1)/2));
     nItermax = nItermax - nItermax % (size-1);
     printf("Nitermax = %d size=%d\n",nItermax,M_WINDOW * (size-1));
     
-    int nSteps = 50000;
     for( i=1; i < size; ++i) {
       MPI_Send(&nSteps, 1, MPI_INT, i, 10, MPI_COMM_WORLD);
       startidx[i-1] = -1;
