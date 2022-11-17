@@ -49,7 +49,7 @@ if (rank != 0) { // Slaves
     int flag = -1, res;
     int stop=-1;
     int work = 0;
-    unsigned long long nSteps=50000;
+    int nSteps=50000;
     unsigned long long nStepstot=0;
     double sumPI = 0, var = 0, mean = 0, yim1 = 0;
     double data[4];
@@ -124,12 +124,12 @@ else { // Master
     int nItermax=  0;
     nItermax = 49;
     nItermax = nItermax - (nItermax % (size * (size-1)/2));
-    printf("Nitermax = %d\n",nItermax);
+    printf("Nitermax = %d size=%d\n",nItermax,M_WINDOW * (size-1));
     
-    unsigned long long nSteps = 50000;
+    int nSteps = 50000;
     for( i=1; i < size; ++i) {
       MPI_Send(&nSteps, 1, MPI_INT, i, 10, MPI_COMM_WORLD);
-      startidx[i-1] = 0;
+      startidx[i-1] = -1;
     }
 
     nmax = 12;
@@ -142,8 +142,9 @@ else { // Master
 
         MPI_Test(&request, &flag, &status);
 
-        printf(" startidx=%d \n", startidx[0]);
+        printf(" startidx=%d flag=%d\n", startidx[0],flag);
         if (flag != 0) {
+        printf(" startidx=%d \n", startidx[0]);
             if (status.MPI_SOURCE != -1)
                 sum += data[0];
             flag = -1;
