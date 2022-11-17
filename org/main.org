@@ -102,7 +102,7 @@ else { // Master
     MPI_Request request;
     MPI_Status status;
     double data[4];
-    int buf, srs, i, nmax, idx=0, sumidx=0, j, k;
+    int buf, srs=0, i, nmax, idx=0, sumidx=0, j, k;
     double sumPItot  = 0.0;
     double sumPI2tot = 0.0;
     double nStepstot = 0.0;
