@@ -88,7 +88,8 @@ if (rank != 0) { // Slaves
         data[2] = var;
         data[3] = nStepstot;
         //printf(" -- rank=%d mean=%10.5f error=%10.5f var=%10.5f varerror=%10.5f\n",rank,mean,M_PI/4 - mean,var,sqrt(var/ (( nStepstot-1)))/sqrt(nStepstot));
-        MPI_Isend(data, 4, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);
+        //MPI_Isend(data, 4, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);
+        MPI_Send(&data, 4, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
         sum++;
 
     }
@@ -142,7 +143,9 @@ else { // Master
             flag = 0;
         }
 
-        MPI_Test(&request, &flag, &status);
+        while(flag!=1){
+          MPI_Test(&request, &flag, &status);
+        }
 
         //printf(" startidx=%d flag=%d\n", startidx[0],flag);
         if (flag != 0) {
