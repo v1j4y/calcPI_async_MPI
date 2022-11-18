@@ -1,12 +1,11 @@
 # Asynchronous MPI 
 
+Asynchronous communication using MPI. This project implements the following communication patterns:
 
-The domain of quantum chemistry needs a library in which the main
-kernels of Quantum Monte Carlo (QMC) methods are implemented. In the
-library proposed in this project, we expose the main algorithms in a
-simple language and provide a standard API and tests to enable the
-development of high-performance QMCkl implementations taking
-advantage of modern hardware.
+1. Publish - Subscribe
+2. Request - Reply
+
+The goal is to implement such standard algorithms available via ZeroMQ with good old MPI.
 
 See the [source code](https://github.com/v1j4y/calcPI_async_MPI/blob/master/org/main.org)
 to read the documentation.
