@@ -8,7 +8,7 @@
 #include "calculate_func.h"
 
 # define M_PI           3.14159265358979323846  /* pi */
-# define M_WINDOW       10                      /* data window */
+# define M_WINDOW       1000                    /* data window */
 
 int main(int argc, char *argv[])
 {
@@ -67,7 +67,7 @@ int sum = 0;
         data[1] = mean;
         data[2] = var;
         data[3] = nStepstot;
-        //printf(" -- rank=%d mean=%10.5f error=%10.5f var=%10.5f varerror=%10.5f\n",rank,mean,M_PI/4 - mean,var,sqrt(var/ (( nStepstot-1)))/sqrt(nStepstot));
+        //printf(" -- rank=%d mean=%10.5f error=%10.5f var=%10.5f varerror=%10.9f\n",rank,mean,M_PI/4 - mean,var,sqrt(var/ (( nStepstot-1)))/sqrt(nStepstot));
         MPI_Isend(data, 4, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);
         sum++;
 
