@@ -126,7 +126,7 @@ else { // Master
     nItermax = atoi(argv[1]);
     int nSteps = 50000;
     nSteps = atoi(argv[2]);
-    nItermax = nItermax - (nItermax % (size * (size-1)/2));
+    //nItermax = nItermax - (nItermax % (size * (size-1)/2));
     nItermax = nItermax - nItermax % (size-1);
     printf("Nitermax = %d size=%d\n",nItermax,M_WINDOW * (size-1));
     
