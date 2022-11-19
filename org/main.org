@@ -97,6 +97,9 @@ if (rank != 0) { // Slaves
 ** Master receives and checks for halting
 #+begin_src  C :tangle (eval c) :main no
 else { // Master
+#+end_src
+*** Define variables
+#+begin_src  C :tangle (eval c) :main no
     double sum = 0;
     int flag = -1, res;
     MPI_Request request;
@@ -107,6 +110,7 @@ else { // Master
     double sumPI2tot = 0.0;
     double nStepstot = 0.0;
     double errorPI = 10.0;
+    double errorEstimate = 0.0;
     double varPI   = 10.0;
     double meana  =  0.0;
     double vara   =  0.0;
@@ -121,6 +125,9 @@ else { // Master
     double datavar[M_WINDOW * (size-1)];
     double datansteps[M_WINDOW * (size-1)];
     int startidx[size-1];
+#+end_src
+*** Perform actual work
+#+begin_src  C :tangle (eval c) :main no
     int nItermax=  0;
     nItermax = 10000;
     nItermax = atoi(argv[1]);
@@ -223,8 +230,8 @@ else { // Master
         }
     }
 
-    //printf("%10.9f (Error=%10.9f) Var=%1.9f (%1.9f %1.9f) sum=%10.5f ratio=%10.5f\n", meanab, errorPI, (varab/(nStepstot * (nStepstot-1))), vara, varb, sum, nStepstot);
-    printf(" mean=%1.9f (Error=%1.9f) varerror=%1.9f\n",meanab, errorPI, sqrt(varab/ (( nStepstot-1)))/sqrt(nStepstot));
+    errorEstimate = sqrt( varab/(nStepstot-1) ) / sqrt( nStepstot ); // sqrt(varab/ (( nStepstot-1)))/sqrt(nStepstot)
+    printf(" mean=%1.9f (Error=%1.9f) varerror=%1.9f\n",meanab, errorPI, errorEstimate);
 }
 #+end_src
 * End

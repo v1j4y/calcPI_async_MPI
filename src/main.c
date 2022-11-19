@@ -75,31 +75,34 @@ int sum = 0;
 }
 
 else { // Master
-    double sum = 0;
-    int flag = -1, res;
-    MPI_Request request;
-    MPI_Status status;
-    double data[4];
-    int buf, srs=0, i, nmax, idx=0, sumidx=0, j, k;
-    double sumPItot  = 0.0;
-    double sumPI2tot = 0.0;
-    double nStepstot = 0.0;
-    double errorPI = 10.0;
-    double varPI   = 10.0;
-    double meana  =  0.0;
-    double vara   =  0.0;
-    double nStepsa=  0.0;
-    double meanb  =  0.0;
-    double varb   =  0.0;
-    double nStepsb=  0.0;
-    double meanab =  0.0;
-    double varab  =  0.0;
-    double nStepsab=  0.0;
-    double datamean[M_WINDOW * (size-1)];
-    double datavar[M_WINDOW * (size-1)];
-    double datansteps[M_WINDOW * (size-1)];
-    int startidx[size-1];
-    int nItermax=  0;
+
+double sum = 0;
+int flag = -1, res;
+MPI_Request request;
+MPI_Status status;
+double data[4];
+int buf, srs=0, i, nmax, idx=0, sumidx=0, j, k;
+double sumPItot  = 0.0;
+double sumPI2tot = 0.0;
+double nStepstot = 0.0;
+double errorPI = 10.0;
+double errorEstimate = 0.0;
+double varPI   = 10.0;
+double meana  =  0.0;
+double vara   =  0.0;
+double nStepsa=  0.0;
+double meanb  =  0.0;
+double varb   =  0.0;
+double nStepsb=  0.0;
+double meanab =  0.0;
+double varab  =  0.0;
+double nStepsab=  0.0;
+double datamean[M_WINDOW * (size-1)];
+double datavar[M_WINDOW * (size-1)];
+double datansteps[M_WINDOW * (size-1)];
+int startidx[size-1];
+
+int nItermax=  0;
     nItermax = 10000;
     nItermax = atoi(argv[1]);
     int nSteps = 50000;
@@ -201,8 +204,8 @@ else { // Master
         }
     }
 
-    //printf("%10.9f (Error=%10.9f) Var=%1.9f (%1.9f %1.9f) sum=%10.5f ratio=%10.5f\n", meanab, errorPI, (varab/(nStepstot * (nStepstot-1))), vara, varb, sum, nStepstot);
-    printf(" mean=%1.9f (Error=%1.9f) varerror=%1.9f\n",meanab, errorPI, sqrt(varab/ (( nStepstot-1)))/sqrt(nStepstot));
+    errorEstimate = sqrt( varab/(nStepstot-1) ) / sqrt( nStepstot ); // sqrt(varab/ (( nStepstot-1)))/sqrt(nStepstot)
+    printf(" mean=%1.9f (Error=%1.9f) varerror=%1.9f\n",meanab, errorPI, errorEstimate);
 }
 
 MPI_Finalize();
