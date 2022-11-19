@@ -8,6 +8,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 
 AC_LANG(C)
+AM_PROG_CC_C_O
 
 AC_PROG_FC(FC)
 
